@@ -1,0 +1,6 @@
+{
+  "name": "YouTube Video Summarizer",
+  "description": "An application that uses the Gemini API to generate summaries of YouTube videos. For longer videos, it provides segmented summaries followed by a final, comprehensive summary.",
+  "requestFramePermissions": [],
+  "prompt": ""
+}
