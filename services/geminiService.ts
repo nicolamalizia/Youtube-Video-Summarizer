@@ -21,8 +21,27 @@ export async function* summarizeYouTubeVideo(
   const maxAttempts = 3;
   let attempt = 0;
 
+  let transcriptText = "";
+  try {
+    yield { text: "", status: "Fetching video transcript..." };
+    const response = await fetch("/api/transcript", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ videoUrl }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      transcriptText = data.transcript;
+    } else {
+      console.warn("Failed to fetch transcript, falling back to URL only.");
+    }
+  } catch (error) {
+    console.warn("Error fetching transcript:", error);
+  }
+
   const systemInstruction = `You are an expert at summarizing YouTube videos.
-    Based on the provided video, generate a comprehensive summary in ${language}.
+    Based on the provided video ${transcriptText ? "transcript" : "URL"}, generate a comprehensive summary in ${language}.
     
     Format Requirements:
     - Use Markdown.
@@ -34,27 +53,37 @@ export async function* summarizeYouTubeVideo(
 
   while (attempt < maxAttempts) {
     try {
+      yield { text: "", status: "Generating summary..." };
+
+      const parts: any[] = [];
+
+      if (transcriptText) {
+        parts.push({
+          text: `Here is the transcript of the video:\n\n${transcriptText}\n\nPlease summarize this video in ${language}.`,
+        });
+      } else {
+        parts.push({
+          text: `Please summarize this video in ${language}. Video URL: ${videoUrl}`,
+        });
+      }
+
+      const config: any = {
+        systemInstruction,
+      };
+
+      if (!transcriptText) {
+        config.tools = [{ googleSearch: {} }];
+      }
+
       const responseStream = await ai.models.generateContentStream({
         model,
         contents: [
           {
             role: "user",
-            parts: [
-              {
-                fileData: {
-                  fileUri: videoUrl,
-                  mimeType: "video/*",
-                },
-              },
-              {
-                text: `Please summarize this video in ${language}.`,
-              },
-            ],
+            parts,
           },
         ],
-        config: {
-          systemInstruction,
-        },
+        config,
       });
 
       for await (const chunk of responseStream) {
