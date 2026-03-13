@@ -720,8 +720,10 @@ const App: React.FC = () => {
         : `Summary of ${url.substring(0, 30)}...`;
 
       // Save to history
+      const existingItem = history.find((item) => item.url === url);
+
       const newItem: HistoryItem = {
-        id: crypto.randomUUID(),
+        id: existingItem ? existingItem.id : crypto.randomUUID(),
         url,
         title: historyTitle,
         summary: fullSummary,
@@ -733,18 +735,21 @@ const App: React.FC = () => {
 
       if (user) {
         try {
+          if (existingItem) {
+            await deleteDoc(doc(db, "users", user.uid, "history", existingItem.id));
+          }
           const docRef = await addDoc(
             collection(db, "users", user.uid, "history"),
             newItem,
           );
           newItem.id = docRef.id;
-          setHistory((prev) => [newItem, ...prev]);
+          setHistory((prev) => [newItem, ...prev.filter((item) => item.url !== url)]);
         } catch (e) {
           console.error("Failed to save to Firestore", e);
-          setHistory((prev) => [newItem, ...prev].slice(0, 20));
+          setHistory((prev) => [newItem, ...prev.filter((item) => item.url !== url)].slice(0, 20));
         }
       } else {
-        setHistory((prev) => [newItem, ...prev].slice(0, 20)); // Keep last 20
+        setHistory((prev) => [newItem, ...prev.filter((item) => item.url !== url)].slice(0, 20)); // Keep last 20
       }
 
       if ("Notification" in window && Notification.permission === "granted") {
@@ -770,7 +775,7 @@ const App: React.FC = () => {
       setIsLoading(false);
       setLoadingStatus(null);
     }
-  }, [url, language, model, isViewingShared, loadingStatus]);
+  }, [url, language, model, isViewingShared, loadingStatus, history, user]);
 
   const handleLoadHistory = (item: HistoryItem) => {
     setSummary(item.summary);
