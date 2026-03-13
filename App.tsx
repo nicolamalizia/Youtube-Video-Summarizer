@@ -29,6 +29,7 @@ import {
   deleteDoc,
   doc,
   where,
+  setDoc,
 } from "./services/firebase";
 import type { User } from "firebase/auth";
 
@@ -603,7 +604,8 @@ const App: React.FC = () => {
           const querySnapshot = await getDocs(q);
           const historyData: HistoryItem[] = [];
           querySnapshot.forEach((doc) => {
-            historyData.push({ id: doc.id, ...doc.data() } as HistoryItem);
+            const data = doc.data();
+            historyData.push({ ...data, id: doc.id } as HistoryItem);
           });
           setHistory(historyData);
         } catch (e) {
@@ -722,11 +724,10 @@ const App: React.FC = () => {
           if (existingItem) {
             await deleteDoc(doc(db, "users", user.uid, "history", existingItem.id));
           }
-          const docRef = await addDoc(
-            collection(db, "users", user.uid, "history"),
+          await setDoc(
+            doc(db, "users", user.uid, "history", newItem.id),
             newItem,
           );
-          newItem.id = docRef.id;
           setHistory((prev) => [newItem, ...prev.filter((item) => item.url !== url)]);
         } catch (e) {
           console.error("Failed to save to Firestore", e);
