@@ -280,9 +280,26 @@ const SummaryDisplay: React.FC<SummaryDisplayProps> = ({
 
   const calculateCost = () => {
     if (!usage) return 0;
-    const isPro = model.includes("pro");
-    const inputRate = isPro ? 3.5 / 1_000_000 : 0.075 / 1_000_000;
-    const outputRate = isPro ? 10.5 / 1_000_000 : 0.3 / 1_000_000;
+    
+    let inputRate = 0;
+    let outputRate = 0;
+
+    if (model === "gemini-3.1-pro-preview") {
+      if (usage.totalTokenCount > 200000) {
+        inputRate = 4.0 / 1_000_000;
+        outputRate = 18.0 / 1_000_000;
+      } else {
+        inputRate = 2.0 / 1_000_000;
+        outputRate = 12.0 / 1_000_000;
+      }
+    } else if (model === "gemini-3.1-flash-lite-preview") {
+      inputRate = 0.25 / 1_000_000;
+      outputRate = 1.50 / 1_000_000;
+    } else {
+      // gemini-3-flash-preview
+      inputRate = 0.50 / 1_000_000;
+      outputRate = 3.00 / 1_000_000;
+    }
 
     return (
       usage.promptTokenCount * inputRate +
@@ -302,7 +319,13 @@ const SummaryDisplay: React.FC<SummaryDisplayProps> = ({
         </h3>
         <p className="mt-2 text-slate-500 max-w-xs text-center">
           {loadingStatus ||
-            `Generating a comprehensive summary using ${model === "gemini-3-pro-preview" ? "Gemini 3 Pro" : "Gemini 3 Flash"}...`}
+            `Generating a comprehensive summary using ${
+              model === "gemini-3.1-pro-preview"
+                ? "Gemini 3.1 Pro"
+                : model === "gemini-3.1-flash-lite-preview"
+                ? "Gemini 3.1 Flash Lite"
+                : "Gemini 3 Flash"
+            }...`}
         </p>
       </div>
     );
@@ -810,8 +833,9 @@ const App: React.FC = () => {
   ];
 
   const modelOptions = [
+    { value: "gemini-3.1-flash-lite-preview", label: "Gemini 3.1 Flash Lite (Fastest)" },
     { value: "gemini-3-flash-preview", label: "Gemini 3 Flash (Fast)" },
-    { value: "gemini-3-pro-preview", label: "Gemini 3 Pro (High Quality)" },
+    { value: "gemini-3.1-pro-preview", label: "Gemini 3.1 Pro (High Quality)" },
   ];
 
   return (
@@ -964,8 +988,10 @@ const App: React.FC = () => {
                       {new Date(item.timestamp).toLocaleDateString()}
                     </span>
                     <span className="ml-auto text-slate-600 italic">
-                      {item.model.includes("pro")
-                        ? "Gemini 3 Pro"
+                      {item.model === "gemini-3.1-pro-preview"
+                        ? "Gemini 3.1 Pro"
+                        : item.model === "gemini-3.1-flash-lite-preview"
+                        ? "Gemini 3.1 Flash Lite"
                         : "Gemini 3 Flash"}
                     </span>
                   </div>
