@@ -13,7 +13,7 @@ async function startServer() {
   // API routes
   app.get("/api/config", (req, res) => {
     res.json({
-      GEMINI_API_KEY: process.env.API_KEY,
+      API_KEY: process.env.API_KEY,
     });
   });
 

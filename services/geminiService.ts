@@ -13,7 +13,7 @@ async function getApiKey(): Promise<string | undefined> {
             const response = await fetch('/api/config');
             if (response.ok) {
                 const config = await response.json();
-                key = config.GEMINI_API_KEY;
+                key = config.API_KEY;
             }
             console.log("Fetch from /api/config");
         } catch (e) {
@@ -35,7 +35,7 @@ export async function getAiInstance(): Promise<GoogleGenAI> {
     if (!aiInstance) {
         const apiKey = await getApiKey();
         if (!apiKey) {
-            throw new Error("Gemini API key not found. Please set GEMINI_API_KEY in the environment.");
+            throw new Error("Gemini API key not found. Please set API_KEY in the environment.");
         }
         aiInstance = new GoogleGenAI({ apiKey });
     }
