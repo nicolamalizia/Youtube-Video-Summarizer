@@ -612,25 +612,9 @@ const App: React.FC = () => {
       };
       loadHistory();
     } else {
-      const stored = localStorage.getItem("summary_history");
-      if (stored) {
-        try {
-          setHistory(JSON.parse(stored));
-        } catch (e) {
-          console.error("Failed to load history", e);
-        }
-      } else {
-        setHistory([]);
-      }
+      setHistory([]);
     }
   }, [user]);
-
-  // Save history when it changes (only for local storage if not logged in)
-  useEffect(() => {
-    if (!user) {
-      localStorage.setItem("summary_history", JSON.stringify(history));
-    }
-  }, [history, user]);
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -749,7 +733,7 @@ const App: React.FC = () => {
           setHistory((prev) => [newItem, ...prev.filter((item) => item.url !== url)].slice(0, 20));
         }
       } else {
-        setHistory((prev) => [newItem, ...prev.filter((item) => item.url !== url)].slice(0, 20)); // Keep last 20
+        setHistory((prev) => [newItem, ...prev.filter((item) => item.url !== url)].slice(0, 20)); // Keep last 20 in memory
       }
 
       if ("Notification" in window && Notification.permission === "granted") {
